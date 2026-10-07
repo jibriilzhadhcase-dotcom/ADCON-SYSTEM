@@ -79,4 +79,6 @@ self.addEventListener('fetch', (event) => {
       console.log('[Service Worker] Network request failed and no cache available.');
     })
   );
-}); 
+});  
+
+// update-sw-v2
