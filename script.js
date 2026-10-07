@@ -18,7 +18,7 @@ const db = firebase.database();
 
 // --- SYSTEM USERS & ACCOUNTS ---
 const SYSTEM_USERS = [
-    { username: "Maxamuud Shadhcase", pass: "user123", role: "user", isBlocked: false },
+    { username: "Maxamuud", pass: "1234", role: "user", isBlocked: false },
     { username: "Cawil Rashiid", pass: "user123", role: "user", isBlocked: false },
     { username: "Jibriil Mohamed Ahmed", pass: "user123", role: "user", isBlocked: false },
     { username: "Eng. Jibriil Axmed Ali", pass: "admin123", role: "admin", isBlocked: false },
