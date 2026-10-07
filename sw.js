@@ -11,6 +11,17 @@ const ASSETS_TO_CACHE = [
   './logo.jpg',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
 ];
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(fetch(event.request));
+});
 
 // 1. INSTALL EVENT - Kaydinta faylasha aasaasiga ah
 self.addEventListener('install', (event) => {
@@ -68,4 +79,4 @@ self.addEventListener('fetch', (event) => {
       console.log('[Service Worker] Network request failed and no cache available.');
     })
   );
-});
+}); 
