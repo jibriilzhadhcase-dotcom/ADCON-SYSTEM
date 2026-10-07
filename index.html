@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADCON SYSTEM</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+</head>
+<body>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>ADCON SYSTEM LOGIN</h2>
+            <p id="loginErrorMessage" class="error-msg" style="display:none; color: red; margin-bottom: 10px;"></p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Geli Username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Geli Password" required>
+                </div>
+                <button type="submit" class="btn-primary">Log In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>ADCON SYSTEM</h2>
+                <small id="currentUserDisplay" style="color: #f59e0b; font-weight: bold;"></small>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" onclick="showPage('dashboard')">📊 Dashboard</button>
+                <button class="nav-btn" onclick="showPage('production')">🚜 Production</button>
+                <button class="nav-btn" onclick="showPage('fuel')">⛽ Fuel</button>
+                <button class="nav-btn" onclick="showPage('trucks')">🚚 Trucks</button>
+                <button class="nav-btn" onclick="showPage('sales')">💰 Sales (Aggregate)</button>
+                <button class="nav-btn" onclick="showPage('expenses')">💸 Expenses</button>
+                <button class="nav-btn" onclick="showPage('incoming')">📥 Incoming</button>
+                <button class="nav-btn" onclick="showPage('reports')">📄 Reports</button>
+                
+                <!-- ADMIN ONLY MENU -->
+                <button id="adminUserMgmtBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('user-management')">👥 Maamulka Users-ka</button>
+                
+                <button class="nav-btn logout-btn" onclick="logout()">🔴 Logout</button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+
+            <!-- DASHBOARD SECTION (Daily Activities - 24 Hours) -->
+            <section id="dashboard" class="page-section active">
+                <div class="top-header">
+                    <h1>Shaqada Maanta (Daily Activities - 24 Hours)</h1>
+                </div>
+
+                <!-- DAILY CASH FLOW (JAYGA / AGGREGATE SUMMARY) -->
+                <div class="cards-grid" style="margin-bottom: 25px;">
+                    <div class="card highlight-card" style="border-left: 5px solid #10b981;">
+                        <h3>Dakhliga Jayga (Maanta)</h3>
+                        <p id="dashTodayAggregateIncome">$0</p>
+                    </div>
+                    <div class="card highlight-card" style="border-left: 5px solid #ef4444;">
+                        <h3>Kharashka Qalabka (Maanta)</h3>
+                        <p id="dashTodayEquipmentExpense">$0</p>
+                    </div>
+                    <div class="card highlight-card" style="border-left: 5px solid #3b82f6;">
+                        <h3>Hadhayga Maanta (Net)</h3>
+                        <p id="dashTodayNetBalance">$0</p>
+                    </div>
+                    <div class="card highlight-card" style="border-left: 5px solid #f59e0b;">
+                        <h3>Ururka Bisha (30 Days)</h3>
+                        <p id="dashMonthlyAccumulatedBalance">$0</p>
+                    </div>
+                </div>
+
+                <!-- GENERAL DASHBOARD SUMMARY -->
+                <div class="cards-grid">
+                    <div class="card">
+                        <h3>Total Sales</h3>
+                        <p id="dashTotalSales">$0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Expenses</h3>
+                        <p id="dashTotalExpenses">$0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Incoming</h3>
+                        <p id="dashTotalIncoming">$0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Fuel</h3>
+                        <p id="dashTotalFuel">0 L</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Trucks</h3>
+                        <p id="dashTotalTrucks">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Production</h3>
+                        <p id="dashTotalProduction">0 Loads</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-logo-container">
+                    <img src="logo.jpeg" alt="ADCON Logo">
+                </div>
+            </section>
+
+            <!-- PRODUCTION SECTION -->
+            <section id="production" class="page-section">
+                <div class="top-header">
+                    <h1>Production Entry</h1>
+                </div>
+                <form id="formProduction" class="form-style">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="prodDust">Imisa Load Dust</label>
+                            <input type="number" id="prodDust" placeholder="Geli tiro..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prodAggregate10">Imisa Load Aggregate 10mm</label>
+                            <input type="number" id="prodAggregate10" placeholder="Geli tiro..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prodAggregate20">Imisa Load Aggregate 20mm</label>
+                            <input type="number" id="prodAggregate20" placeholder="Geli tiro..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prodDate">Taariikhda (Date)</label>
+                            <input type="date" id="prodDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Kaydi</button>
+                </form>
+            </section>
+
+            <!-- FUEL SECTION -->
+            <section id="fuel" class="page-section">
+                <div class="top-header">
+                    <h1>Fuel Management</h1>
+                </div>
+                <form id="formFuel" class="form-style">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fuelDriverName">Magaca Darwalka</label>
+                            <input type="text" id="fuelDriverName" placeholder="Magaca darwalka..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fuelPlateNumber">Taargada Gaadhiga (Plate No)</label>
+                            <input type="text" id="fuelPlateNumber" placeholder="Tusaale: 12345" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fuelLiters">Tirada Litirada (Liters)</label>
+                            <input type="number" id="fuelLiters" placeholder="Geli litirada..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fuelStationName">Magaca Station-ka</label>
+                            <input type="text" id="fuelStationName" placeholder="Station-ka lagu shubay..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fuelDate">Taariikhda (Date)</label>
+                            <input type="date" id="fuelDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Kaydi</button>
+                </form>
+            </section>
+
+            <!-- TRUCKS SECTION -->
+            <section id="trucks" class="page-section">
+                <div class="top-header">
+                    <h1>Truck Loads</h1>
+                </div>
+                <form id="formTrucks" class="form-style">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="truckDriverName">Magaca Darwalka</label>
+                            <input type="text" id="truckDriverName" placeholder="Magaca darwalka..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="truckDestination">Magaalada / Goobta (Destination)</label>
+                            <input type="text" id="truckDestination" placeholder="Goobta loo wado..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="truckPlateNumber">Taargada Gaadhiga (Plate No)</label>
+                            <input type="text" id="truckPlateNumber" placeholder="Tusaale: 12345" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="truckDate">Taariikhda (Date)</label>
+                            <input type="date" id="truckDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Kaydi</button>
+                </form>
+            </section>
+
+            <!-- SALES SECTION (AGGREGATE) -->
+            <section id="sales" class="page-section">
+                <div class="top-header">
+                    <h1>Sales Entry (Aggregate/Jayga)</h1>
+                </div>
+                <form id="formSales" class="form-style">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="salesDriverName">Magaca Darwalka</label>
+                            <input type="text" id="salesDriverName" placeholder="Magaca darwalka..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salesCustomerName">Magaca Macmiilka (Customer)</label>
+                            <input type="text" id="salesCustomerName" placeholder="Magaca macmiilka..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salesLoads">Tirada Load-ka</label>
+                            <input type="number" id="salesLoads" placeholder="Geli tirada..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salesTruckInfo">Xogta Gaadhiga / Taargada</label>
+                            <input type="text" id="salesTruckInfo" placeholder="Gaadhiga ama taargada..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salesAmount">Lacagta ($)</label>
+                            <input type="number" id="salesAmount" placeholder="Geli lacagta..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salesDate">Taariikhda (Date)</label>
+                            <input type="date" id="salesDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Kaydi</button>
+                </form>
+            </section>
+
+            <!-- EXPENSES SECTION -->
+            <section id="expenses" class="page-section">
+                <div class="top-header">
+                    <h1>Expenses Entry (Qalabka & Bixinta)</h1>
+                </div>
+                <form id="formExpenses" class="form-style">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="expItemName">Adeegga / Qalabka la iibsaday</label>
+                            <input type="text" id="expItemName" placeholder="Qor waxa la iibsaday..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expAmount">Lacagta ($)</label>
+                            <input type="number" id="expAmount" placeholder="Geli lacagta..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expLocation">Goobta (Location)</label>
+                            <input type="text" id="expLocation" placeholder="Goobta ama magaalada..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expDate">Taariikhda (Date)</label>
+                            <input type="date" id="expDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Kaydi</button>
+                </form>
+            </section>
+
+            <!-- INCOMING SECTION -->
+            <section id="incoming" class="page-section">
+                <div class="top-header">
+                    <h1>Incoming Entry</h1>
+                </div>
+                <form id="formIncoming" class="form-style">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="incDescription">Faahfaahinta Lacagta Soo gashay</label>
+                            <input type="text" id="incDescription" placeholder="Faahfaahin..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="incPayerName">Magaca Bixiyaha (Payer)</label>
+                            <input type="text" id="incPayerName" placeholder="Magaca bixiyaha..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="incAmount">Lacagta ($)</label>
+                            <input type="number" id="incAmount" placeholder="Geli lacagta..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="incDate">Taariikhda (Date)</label>
+                            <input type="date" id="incDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Kaydi</button>
+                </form>
+            </section>
+
+            <!-- USER MANAGEMENT SECTION (ADMIN ONLY) -->
+            <section id="user-management" class="page-section">
+                <div class="top-header">
+                    <h1>Maamulka Users-ka (Admin Control)</h1>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Magaca User-ka</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Action (Jooji / Fur)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <!-- Populated dynamically by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- REPORTS SECTION -->
+            <section id="reports" class="page-section">
+                <div class="top-header">
+                    <h1>Reports Filter & Export</h1>
+                </div>
+                <div class="filter-box" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <label for="reportFilter"><strong>Category:</strong></label>
+                        <select id="reportFilter" onchange="filterReports()">
+                            <option value="all">All Reports</option>
+                            <option value="production">Production</option>
+                            <option value="fuel">Fuel</option>
+                            <option value="trucks">Trucks</option>
+                            <option value="sales">Sales (Aggregate)</option>
+                            <option value="expenses">Expenses</option>
+                            <option value="incoming">Incoming</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="reportStartDate"><strong>From Date:</strong></label>
+                        <input type="date" id="reportStartDate" onchange="filterReports()">
+                    </div>
+
+                    <div>
+                        <label for="reportEndDate"><strong>To Date:</strong></label>
+                        <input type="date" id="reportEndDate" onchange="filterReports()">
+                    </div>
+
+                    <button class="btn-print" onclick="window.print()">🖨️ Print Report</button>
+                </div>
+
+                <div class="table-container" style="margin-top: 15px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Details</th>
+                                <th>Amount / Liters</th>
+                                <th>Soo Geliyay (User)</th>
+                                <th>Comments</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <!-- Data will load dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- App Script -->
+    <script src="script.js"></script>
+</body>
+</html>

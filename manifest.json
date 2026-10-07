@@ -1,0 +1,22 @@
+{
+  "short_name": "ADCON",
+  "name": "ADCON - Systemka Maamulka Wadooyinka",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1041/1041888.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1041/1041888.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./",
+  "scope": "./",
+  "background_color": "#2c3e50",
+  "theme_color": "#e67e22",
+  "display": "standalone",
+  "orientation": "portrait"
+}
