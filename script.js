@@ -530,4 +530,4 @@ function toggleBlockUser(userKey, blockStatus) {
             renderUserManagementTable();
         })
         .catch(err => alert("Cillad: " + err.message));
-}
+} 
