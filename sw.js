@@ -1,5 +1,5 @@
 // Beddel version-kan markaad koodh cusub diraysid si uu cache-gii hore toos u tirtiro
-const CACHE_NAME = 'adcon-v1.0.7';
+const CACHE_NAME = 'adcon-v1.0.9';
 
 // Faylasha loo baahan yahay in lagu kaydiyo cache-ka
 const ASSETS_TO_CACHE = [

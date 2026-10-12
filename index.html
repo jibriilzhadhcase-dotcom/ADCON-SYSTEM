@@ -48,6 +48,10 @@
                 <button class="nav-btn" onclick="showPage('incoming')">📥 Incoming</button>
                 <button class="nav-btn" onclick="showPage('reports')">📄 Reports</button>
                 
+                <!-- NEW OPTIONS: MESSAGES & SETTINGS -->
+                <button class="nav-btn" onclick="showPage('messages-page')">💬 Messages</button>
+                <button class="nav-btn" onclick="showPage('settings-page')">⚙️ Settings</button>
+
                 <!-- ADMIN ONLY MENU -->
                 <button id="adminUserMgmtBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('user-management')">👥 Maamulka Users-ka</button>
                 
@@ -297,11 +301,72 @@
                 </form>
             </section>
 
+            <!-- MESSAGES SECTION -->
+            <section id="messages-page" class="page-section">
+                <div class="top-header">
+                    <h1>Fariimaha Nidaamka (Messages)</h1>
+                </div>
+                <div class="form-style" style="margin-bottom: 20px;">
+                    <h3>Dir Fariin Cusub</h3>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <input type="text" id="msgReceiver" placeholder="Ku socota (Tusaale: ALL ama Magaca User-ka)" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <textarea id="msgText" placeholder="Qor fariintaada halkan..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;" rows="3" required></textarea>
+                    </div>
+                    <button type="button" class="btn-submit" onclick="submitNewMessage()">Dir Fariinta</button>
+                </div>
+                <div class="table-container">
+                    <div id="messageList" style="display: flex; flexDirection: column; gap: 10px;">
+                        <!-- Messages loaded dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- SETTINGS SECTION -->
+            <section id="settings-page" class="page-section">
+                <div class="top-header">
+                    <h1>Dejinta Koontada (Settings)</h1>
+                </div>
+                <div class="form-style">
+                    <h3>Beddel Password-kaaga</h3>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="newPasswordInput">Password-ka Cusub</label>
+                        <input type="password" id="newPasswordInput" placeholder="Geli password cusub..." required>
+                    </div>
+                    <button type="button" class="btn-submit" onclick="updatePasswordHandler()">Beddel Password</button>
+                </div>
+            </section>
+
             <!-- USER MANAGEMENT SECTION (ADMIN ONLY) -->
             <section id="user-management" class="page-section">
                 <div class="top-header">
                     <h1>Maamulka Users-ka (Admin Control)</h1>
                 </div>
+
+                <!-- ADD NEW USER FORM (ADMIN ONLY) -->
+                <div class="form-style" style="margin-bottom: 25px;">
+                    <h3>Ku Dar User Cusub</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="newUsername">Username</label>
+                            <input type="text" id="newUsername" placeholder="Magaca user-ka..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserPassword">Password</label>
+                            <input type="password" id="newUserPassword" placeholder="Password-ka..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newUserRole">Role</label>
+                            <select id="newUserRole" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-submit" style="margin-top: 15px;" onclick="addNewUserHandler()">Abuur User-ka</button>
+                </div>
+
                 <div class="table-container">
                     <table>
                         <thead>

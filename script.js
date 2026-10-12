@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupLogin();
     setupFormListeners();
     listenToRealtimeData();
+    listenToMessages();
     registerServiceWorker();
 });
 
@@ -250,8 +251,7 @@ function setupFormListeners() {
         return {
             date, type: 'expenses',
             category: 'Equipment',
-            info: `Item: ${item} | Location: ${loc}`,
-            value: amount
+            info: `Item: ${item} | Location: ${loc}`,value: amount
         };
     });
 
@@ -478,7 +478,7 @@ function deleteRecord(id) {
         return;
     }
 
-    if (confirm("Ma ziidtaa inaad tirtirto xogtan?")) {
+    if (confirm("Ma hubtaa inaad tirtirto xogtan?")) {
         db.ref('records/' + id).remove()
             .then(() => alert("Xogta waa la tirtiray!"))
             .catch(error => alert("Cillad ayaa dhacday: " + error.message));
@@ -531,6 +531,110 @@ function toggleBlockUser(userKey, blockStatus) {
         .then(() => {
             alert(blockStatus ? "User-ka waa la xiray!" : "User-ka waa la furay!");
             renderUserManagementTable();
+        })
+        .catch(err => alert("Cillad: " + err.message));
+}
+
+// 9. NEW FEATURES: ADD USER, MESSAGES, & SETTINGS HANDLERS
+function addNewUserHandler() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert("Admin kaliya ayaa abuuraya user cusub!");
+        return;
+    }
+
+    const usernameInput = document.getElementById('newUsername').value.trim();
+    const passwordInput = document.getElementById('newUserPassword').value.trim();
+    const roleInput = document.getElementById('newUserRole').value;
+
+    if (!usernameInput || !passwordInput) {
+        alert("Fadlan buuxi magaca iyo password-ka!");
+        return;
+    }
+
+    const key = usernameInput.replace(/[\.\#\$\[\]]/g, "_");
+    const newUser = {
+        username: usernameInput,
+        password: passwordInput,
+        role: roleInput,
+        isBlocked: false
+    };
+
+    db.ref(`users/${key}`).set(newUser)
+        .then(() => {
+            alert(`User-ka ${usernameInput} si guul leh ayaa loo abuuray!`);
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newUserPassword').value = '';
+            renderUserManagementTable();
+        })
+        .catch(err => alert("Cillad: " + err.message));
+}
+
+function submitNewMessage() {
+    const receiverInput = document.getElementById('msgReceiver').value.trim();
+    const textInput = document.getElementById('msgText').value.trim();
+
+    if (!receiverInput || !textInput) {
+        alert("Fadlan buuxi goobta fariinta iyo cidda ay ku socoto!");
+        return;
+    }
+
+    const newMessage = {
+        sender: currentUser.username,
+        receiver: receiverInput,
+        text: textInput,
+        timestamp: new Date().toISOString()
+    };
+
+    db.ref('messages').push(newMessage)
+        .then(() => {
+            alert("Fariinta si guul leh ayaa loo diray!");
+            document.getElementById('msgReceiver').value = '';
+            document.getElementById('msgText').value = '';
+        })
+        .catch(err => alert("Cillad: " + err.message));
+}
+
+function listenToMessages() {
+    db.ref('messages').on('value', snapshot => {
+        const data = snapshot.val();
+        const messageContainer = document.getElementById('messageList');
+        if (!messageContainer) return;
+
+        messageContainer.innerHTML = '';
+        if (data) {
+            Object.keys(data).forEach(key => {
+                const msg = data[key];
+                if (msg.receiver === 'ALL' || msg.receiver.toLowerCase() === currentUser?.username?.toLowerCase() || msg.sender.toLowerCase() === currentUser?.username?.toLowerCase()) {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; color: #fff;";
+                    div.innerHTML = `<b>${msg.sender} ➔ ${msg.receiver}:</b> ${msg.text} <br><small style="color: #94a3b8;">${new Date(msg.timestamp).toLocaleString()}</small>`;
+                    messageContainer.appendChild(div);
+                }
+            });
+        }
+        if (messageContainer.innerHTML === '') {
+            messageContainer.innerHTML = '<p style="color: gray; text-align: center;">Fariimo ma jiraan.</p>';
+        }
+    });
+}
+
+function updatePasswordHandler() {
+    if (!currentUser) return;
+
+    const newPass = document.getElementById('newPasswordInput').value.trim();
+    if (!newPass) {
+        alert("Fadlan geli password-ka cusub!");
+        return;
+    }
+
+    let key = currentUser.username.replace(/[\.\#\$\[\]]/g, "_");
+
+    db.ref(`users/${key}/password`).set(newPass)
+        .then(() => {
+            alert("Password-kaaga si guul leh ayaa loo beddelay!");
+            currentUser.password = newPass;
+            localStorage.setItem('adcon_current_user', JSON.stringify(currentUser));
+            document.getElementById('newPasswordInput').value = '';
         })
         .catch(err => alert("Cillad: " + err.message));
 }
