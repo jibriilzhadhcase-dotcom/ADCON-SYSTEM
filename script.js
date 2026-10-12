@@ -18,12 +18,12 @@ const db = firebase.database();
 
 // --- SYSTEM USERS & ACCOUNTS ---
 const SYSTEM_USERS = [
-    { username: "Maxamuud", pass: "1234", role: "user", isBlocked: false },
-    { username: "Cawil Rashiid", pass: "user123", role: "user", isBlocked: false },
-    { username: "Jibriil Mohamed Ahmed", pass: "user123", role: "user", isBlocked: false },
-    { username: "Eng. Jibriil Axmed Ali", pass: "admin123", role: "admin", isBlocked: false },
-    { username: "Caawiyaha Eng", pass: "admin123", role: "admin", isBlocked: false }
-];
+    { username: "Maxamuud", password: "1234", role: "user", isBlocked: false },
+    { username: "Cawil Rashiid", password: "user123", role: "user", isBlocked: false },
+    { username: "Jibriil Mohamed Ahmed", password: "user123", role: "user", isBlocked: false },
+    { username: "Eng. Jibriil Axmed Ali", password: "admin123", role: "admin", isBlocked: false },
+    { username: "Caawiyaha Eng", password: "admin123", role: "admin", isBlocked: false }
+  ];
 
 let currentUser = JSON.parse(localStorage.getItem('adcon_current_user')) || null;
 let cachedRecords = [];
@@ -93,7 +93,7 @@ function setupLogin() {
                     return;
                 }
 
-                if (foundUser.pass !== passwordInput) {
+                if (foundUser.password !== passwordInput) {
                     showError("Password-ka aad gelisay waa khaldan yahay!");
                     return;
                 }
@@ -530,4 +530,4 @@ function toggleBlockUser(userKey, blockStatus) {
             renderUserManagementTable();
         })
         .catch(err => alert("Cillad: " + err.message));
-} 
+}
