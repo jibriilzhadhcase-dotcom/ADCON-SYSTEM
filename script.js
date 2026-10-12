@@ -23,10 +23,11 @@ const SYSTEM_USERS = [
     { username: "Jibriil Mohamed Ahmed", password: "user123", role: "user", isBlocked: false },
     { username: "Eng. Jibriil Axmed Ali", password: "admin123", role: "admin", isBlocked: false },
     { username: "Caawiyaha Eng", password: "admin123", role: "admin", isBlocked: false }
-  ];
+];
 
 let currentUser = JSON.parse(localStorage.getItem('adcon_current_user')) || null;
 let cachedRecords = [];
+let selectedChatUser = null;
 
 // Ogaanshada Internet-ka
 db.ref('.info/connected').on('value', function(snap) {
@@ -43,8 +44,8 @@ document.addEventListener('DOMContentLoaded', function () {
     setupLogin();
     setupFormListeners();
     listenToRealtimeData();
-    listenToMessages();
     registerServiceWorker();
+    loadChatUsers();
 });
 
 function registerServiceWorker() {
@@ -117,6 +118,7 @@ function setupLogin() {
 
                 updateUIForRole();
                 renderReports();
+                loadChatUsers();
             });
         });
     }
@@ -173,7 +175,7 @@ function updateUIForRole() {
     }
 }
 
-// 3. NAVIGATION
+// 3. NAVIGATION & PAGE DISPLAY
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -183,6 +185,8 @@ function showPage(pageId) {
 
     if (pageId === 'user-management') {
         renderUserManagementTable();
+    } else if (pageId === 'messages-page') {
+        loadChatUsers();
     }
 }
 
@@ -523,119 +527,112 @@ function toggleBlockUser(userKey, blockStatus) {
         .catch(err => alert("Cillad: " + err.message));
 }
 
-// 9. NEW FEATURES: ADD USER, MESSAGES, & SETTINGS HANDLERS
-function addNewUserHandler() {
-    if (!currentUser || currentUser.role !== 'admin') {
-        alert("Admin kaliya ayaa abuuraya user cusub!");
-        return;
-    }
+// 9. NEW DIRECT CHAT LOGIC
+function loadChatUsers() {
+    const userListContainer = document.getElementById('chatUserList');
+    if (!userListContainer) return;
 
-    const usernameInput = document.getElementById('newUsername').value.trim();
-    const passwordInput = document.getElementById('newUserPassword').value.trim();
-    const roleInput = document.getElementById('newUserRole').value;
+    db.ref('users').once('value', snapshot => {
+        const users = snapshot.val();
+        userListContainer.innerHTML = '';
 
-    if (!usernameInput || !passwordInput) {
-        alert("Fadlan buuxi magaca iyo password-ka!");
-        return;
-    }
+        if (users) {
+            Object.keys(users).forEach(key => {
+                const u = users[key];
+                // Ka reeb qofka hadda xisaabta ku jira (Current user)
+                if (currentUser && u.username.toLowerCase() === currentUser.username.toLowerCase()) return;
 
-    const key = usernameInput.replace(/[\.\#\$\[\]]/g, "_");
-    const newUser = {
-        username: usernameInput,
-        password: passwordInput,
-        role: roleInput,
-        isBlocked: false
-    };
-
-    db.ref(`users/${key}`).set(newUser)
-        .then(() => {
-            alert(`User-ka ${usernameInput} si guul leh ayaa loo abuuray!`);
-            document.getElementById('newUsername').value = '';
-            document.getElementById('newUserPassword').value = '';
-            renderUserManagementTable();
-        })
-        .catch(err => alert("Cillad: " + err.message));
-}
-
-function submitNewMessage() {
-    if (!currentUser) {
-        alert("Fadlan marka hore soo gal (Login)!");
-        return;
-    }
-
-    const receiverInput = document.getElementById('msgReceiver').value.trim();
-    const textInput = document.getElementById('msgText').value.trim();
-
-    if (!receiverInput || !textInput) {
-        alert("Fadlan buuxi goobta fariinta iyo cidda ay ku socoto!");
-        return;
-    }
-
-    const newMessage = {
-        sender: currentUser.username.trim(),
-        receiver: receiverInput,
-        text: textInput,
-        timestamp: new Date().toISOString()
-    };
-
-    db.ref('messages').push(newMessage)
-        .then(() => {
-            alert("Fariinta si guul leh ayaa loo diray!");
-            document.getElementById('msgText').value = '';
-        })
-        .catch(err => alert("Cillad: " + err.message));
-}
-
-function listenToMessages() {
-    db.ref('messages').on('value', snapshot => {
-        const data = snapshot.val();
-        const messageContainer = document.getElementById('messageList');
-        if (!messageContainer) return;
-
-        messageContainer.innerHTML = '';
-        if (data) {
-            Object.keys(data).forEach(key => {
-                const msg = data[key];
-                
-                const currentUserName = currentUser?.username?.toLowerCase().trim();
-                const senderName = msg.sender?.toLowerCase().trim();
-                const receiverName = msg.receiver?.toLowerCase().trim();
-
-                const isForEveryone = receiverName === 'all';
-                const isIAmSender = senderName === currentUserName;
-                const isIAmReceiver = receiverName === currentUserName;
-
-                if (isForEveryone || isIAmSender || isIAmReceiver) {
-                    const div = document.createElement('div');
-                    const isMine = isIAmSender;
-
-                    div.style.cssText = `
-                        background: ${isMine ? '#2b394a' : '#1e293b'}; 
-                        padding: 12px; 
-                        border-radius: 8px; 
-                        border-left: 4px solid ${isMine ? '#10b981' : '#f59e0b'}; 
-                        color: #fff;
-                        margin-bottom: 8px;
-                    `;
-
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b>${msg.sender} ➔ ${msg.receiver}</b>
-                            <small style="color: #94a3b8;">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-                        </div>
-                        <p style="margin-top: 5px; font-size: 14px;">${msg.text}</p>
-                    `;
-                    messageContainer.appendChild(div);
-                }
+                const li = document.createElement('li');
+                li.className = 'user-chat-item';
+                li.textContent = `👤 ${u.username}`;
+                li.onclick = () => selectUserForChat(u.username, li);
+                userListContainer.appendChild(li);
             });
         }
 
-        if (messageContainer.innerHTML === '') {
-            messageContainer.innerHTML = '<p style="color: gray; text-align: center;">Fariimo ma jiraan.</p>';
+        if (userListContainer.innerHTML === '') {
+            userListContainer.innerHTML = '<li style="padding:10px; color:gray;">Users ma jiraan</li>';
         }
     });
 }
 
+function selectUserForChat(username, element) {
+    selectedChatUser = username;
+    document.querySelectorAll('.user-chat-item').forEach(el => el.classList.remove('active'));
+    if (element) element.classList.add('active');
+
+    document.getElementById('activeChatUser').textContent = `💬 Sheekada: ${username}`;
+    document.getElementById('chatInput').disabled = false;
+    document.getElementById('chatSendBtn').disabled = false;
+
+    listenToDirectMessages();
+}
+
+function sendDirectMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+
+    if (!text || !selectedChatUser || !currentUser) return;
+
+    const msgData = {
+        sender: currentUser.username.trim(),
+        receiver: selectedChatUser.trim(),
+        text: text,
+        timestamp: new Date().toISOString()
+    };
+
+    db.ref('messages').push(msgData)
+        .then(() => {
+            input.value = '';
+        })
+        .catch(err => alert("Error: " + err.message));
+}
+
+function listenToDirectMessages() {
+    if (!selectedChatUser || !currentUser) return;
+
+    db.ref('messages').on('value', snapshot => {
+        const data = snapshot.val();
+        const msgContainer = document.getElementById('chatMessages');
+        if (!msgContainer) return;
+
+        msgContainer.innerHTML = '';
+
+        if (data) {
+            Object.keys(data).forEach(key => {
+                const msg = data[key];
+                const sender = msg.sender?.toLowerCase().trim();
+                const receiver = msg.receiver?.toLowerCase().trim();
+                const myName = currentUser.username.toLowerCase().trim();
+                const activeUser = selectedChatUser.toLowerCase().trim();
+
+                const isMyMessageToUser = sender === myName && receiver === activeUser;
+                const isUserMessageToMe = sender === activeUser && receiver === myName;
+
+                if (isMyMessageToUser || isUserMessageToMe) {
+                    const bubble = document.createElement('div');
+                    const isSentByMe = sender === myName;
+                    
+                    bubble.className = `chat-bubble ${isSentByMe ? 'sent' : 'received'}`;
+                    bubble.innerHTML = `
+                        <div>${msg.text}</div>
+                        <small style="font-size: 10px; opacity: 0.8; display: block; text-align: right; margin-top: 3px;">
+                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </small>
+                    `;
+                    msgContainer.appendChild(bubble);
+                }
+            });
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        if (msgContainer.innerHTML === '') {
+            msgContainer.innerHTML = '<p style="color: gray; text-align: center; margin-top: 20px;">Fariin weli ma dhex marin labadiina.</p>';
+        }
+    });
+}
+
+// 10. SETTINGS HANDLER
 function updateAccountSettingsHandler() {
     if (!currentUser) {
         alert("Fadlan marka hore soo gal (Login)!");
@@ -653,17 +650,11 @@ function updateAccountSettingsHandler() {
     const oldKey = currentUser.username.replace(/[\.\#\$\[\]]/g, "_");
     const updates = {};
 
-    if (newUsername) {
-        updates.username = newUsername;
-    }
-    if (newPassword) {
-        updates.password = newPassword;
-    }
+    if (newUsername) updates.username = newUsername;
+    if (newPassword) updates.password = newPassword;
 
-    // Update in Firebase Database
     db.ref(`users/${oldKey}`).update(updates)
         .then(() => {
-            // If username changed, we should migrate the key or update current user object
             if (newUsername && newUsername !== currentUser.username) {
                 const newKey = newUsername.replace(/[\.\#\$\[\]]/g, "_");
                 db.ref(`users/${oldKey}`).once('value', snapshot => {
@@ -689,6 +680,7 @@ function updateAccountSettingsHandler() {
             document.getElementById('newUsernameInput').value = '';
             document.getElementById('newPasswordInput').value = '';
             updateUIForRole();
+            loadChatUsers();
         })
         .catch(err => alert("Cillad: " + err.message));
 }
