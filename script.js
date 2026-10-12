@@ -35,6 +35,14 @@ document.addEventListener('DOMContentLoaded', function () {
     listenToRealtimeData();
     registerServiceWorker();
     loadChatUsers();
+
+    // Toos ugu xidh badhanka Abuur User-ka
+    const addUserBtn = document.getElementById('addNewUserBtn');
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', function() {
+            addNewUserHandler();
+        });
+    }
 });
 
 function registerServiceWorker() {
@@ -167,6 +175,8 @@ function showPage(pageId) {
         renderUserManagementTable();
     } else if (pageId === 'messages-page') {
         loadChatUsers();
+    } else if (pageId === 'reports') {
+        renderReports();
     }
 }
 
@@ -280,26 +290,111 @@ function updateDashboard(records) {
     if (document.getElementById('dashTotalProduction')) document.getElementById('dashTotalProduction').textContent = `${getSum('production')} Loads`;
 }
 
+// --- REPORTS RENDERING & FILTERING ---
 function renderReports() {
     const tableBody = document.getElementById('reportTableBody');
+    const filterSelect = document.getElementById('reportFilter');
+    const startDateInput = document.getElementById('reportStartDate');
+    const endDateInput = document.getElementById('reportEndDate');
+
     if (!tableBody) return;
     tableBody.innerHTML = '';
 
-    cachedRecords.forEach(record => {
+    const selectedCategory = filterSelect ? filterSelect.value.toLowerCase().trim() : 'all';
+    const startDate = startDateInput ? startDateInput.value : '';
+    const endDate = endDateInput ? endDateInput.value : '';
+
+    const filteredRecords = cachedRecords.filter(record => {
+        if (selectedCategory !== 'all') {
+            if (record.type?.toLowerCase().trim() !== selectedCategory) {
+                return false;
+            }
+        }
+        if (startDate && record.date < startDate) return false;
+        if (endDate && record.date > endDate) return false;
+        return true;
+    });
+
+    if (filteredRecords.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #94a3b8;">Xog ma jirto qaybtan aad dooratay.</td></tr>';
+        return;
+    }
+
+    filteredRecords.forEach(record => {
         const row = document.createElement('tr');
+        
+        let unit = '';
+        if (['sales', 'expenses', 'incoming'].includes(record.type)) {
+            unit = '$';
+        } else if (record.type === 'fuel') {
+            unit = 'L ';
+        }
+
+        let commentsText = '<span style="color:#64748b; font-style:italic;">Faallo ma jirto</span>';
+        if (record.comments) {
+            let commentsList = [];
+            if (Array.isArray(record.comments)) {
+                commentsList = record.comments;
+            } else if (typeof record.comments === 'object') {
+                commentsList = Object.values(record.comments);
+            }
+
+            if (commentsList.length > 0) {
+                commentsText = commentsList.map(c => 
+                    `<div style="margin-bottom: 4px; background: #0f172a; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                        <b style="color: #f59e0b;">${c.author || 'User'}:</b> ${c.text}
+                    </div>`
+                ).join('');
+            }
+        }
+
+        let actionsHtml = `<button style="background-color: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-right: 5px;" onclick="addComment('${record.id}')">💬 Comment</button>`;
+
+        if (currentUser && currentUser.role === 'admin') {
+            actionsHtml += `<button style="background-color: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer;" onclick="deleteRecord('${record.id}')">🗑️ Delete</button>`;
+        }
+
         row.innerHTML = `
             <td>${record.date || 'N/A'}</td>
-            <td style="font-weight:bold;">${record.type}</td>
+            <td style="text-transform: capitalize; font-weight: bold; color: #f59e0b;">${record.type}</td>
             <td>${record.info || ''}</td>
-            <td>$${record.value}</td>
-            <td><small>${record.createdBy || 'Unknown'}</small></td>
-            <td><i>Diminish</i></td>
-            <td><button onclick="addComment('${record.id}')">💬</button></td>
+            <td><strong>${unit}${record.value}</strong></td>
+            <td><small style="color: #94a3b8;">${record.createdBy || 'Unknown'}</small></td>
+            <td>${commentsText}</td>
+            <td>${actionsHtml}</td>
         `;
         tableBody.appendChild(row);
     });
 }
 
+function filterReports() {
+    renderReports();
+}
+
+function addComment(recordId) {
+    const commentText = prompt("Geli faalladaada (Comment):");
+    if (!commentText || !currentUser) return;
+
+    const recordRef = db.ref(`records/${recordId}/comments`);
+    recordRef.push({
+        author: currentUser.username,
+        text: commentText,
+        timestamp: new Date().toISOString()
+    }).then(() => {
+        alert("Faallada waa la diiwaangeliyay!");
+    });
+}
+
+function deleteRecord(recordId) {
+    if (!currentUser || currentUser.role !== 'admin') return alert("Admin kaliya ayaa tirtiri kara!");
+    if (confirm("Ma hubtaa inaad tirtirto xogtan?")) {
+        db.ref(`records/${recordId}`).remove()
+            .then(() => alert("Xogta waa la tirtiray!"))
+            .catch(err => alert("Cillad: " + err.message));
+    }
+}
+
+// --- USER MANAGEMENT & ADD USER ---
 function renderUserManagementTable() {
     const tableBody = document.getElementById('userTableBody');
     if (!tableBody) return;
@@ -344,7 +439,6 @@ function toggleBlockUser(userKey, blockStatus) {
         });
 }
 
-// --- ADD NEW USER FUNCTION (FIXED) ---
 function addNewUserHandler(e) {
     if (e) e.preventDefault();
 
@@ -383,6 +477,7 @@ function addNewUserHandler(e) {
     return false;
 }
 
+// --- CHAT SYSTEM ---
 function loadChatUsers() {
     const userListContainer = document.getElementById('chatUserList');
     if (!userListContainer) return;
