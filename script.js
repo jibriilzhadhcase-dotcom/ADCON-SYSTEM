@@ -93,7 +93,10 @@ function setupLogin() {
                     return;
                 }
 
-                if (foundUser.password !== passwordInput) {
+                // Taageero password ama pass (haddii uu ku jiro Firebase)
+                const actualPassword = foundUser.password || foundUser.pass;
+
+                if (actualPassword !== passwordInput) {
                     showError("Password-ka aad gelisay waa khaldan yahay!");
                     return;
                 }
