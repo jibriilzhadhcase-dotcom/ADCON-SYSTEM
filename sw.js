@@ -1,5 +1,5 @@
 // Beddel version-kan markaad koodh cusub diraysid si uu cache-gii hore toos u tirtiro
-const CACHE_NAME = 'adcon-v1.1.1';
+const CACHE_NAME = 'adcon-v1.1.2';
 
 // Faylasha loo baahan yahay in lagu kaydiyo cache-ka
 const ASSETS_TO_CACHE = [
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching app assets');
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting()) // Khasab ku samee in uu toos u shaqeeyo
+    }).then(() => self.skipWaiting()) // Khasab ku makee in uu toos u shaqeeyo
   );
 });
 
@@ -52,7 +52,7 @@ self.addEventListener('fetch', (event) => {
     // 1. Ugu horrayn ka soo hag Netlify (Network)
     fetch(event.request)
       .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
