@@ -10,13 +10,11 @@ const firebaseConfig = {
     measurementId: "G-583ZZT6JV7"
 };
 
-// Initialize Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// --- SYSTEM USERS & ACCOUNTS ---
 const SYSTEM_USERS = [
     { username: "Maxamuud", password: "1234", role: "user", isBlocked: false },
     { username: "Cawil Rashiid", password: "user123", role: "user", isBlocked: false },
@@ -28,15 +26,6 @@ const SYSTEM_USERS = [
 let currentUser = JSON.parse(localStorage.getItem('adcon_current_user')) || null;
 let cachedRecords = [];
 let selectedChatUser = null;
-
-// Ogaanshada Internet-ka
-db.ref('.info/connected').on('value', function(snap) {
-    if (snap.val() === true) {
-        console.log("Internet-ku waa Live (Online)");
-    } else {
-        console.log("Internet-ku waa Offline");
-    }
-});
 
 document.addEventListener('DOMContentLoaded', function () {
     initUserAccounts();
@@ -54,7 +43,6 @@ function registerServiceWorker() {
     }
 }
 
-// Initialize User Accounts in Firebase if not present
 function initUserAccounts() {
     db.ref('users').once('value', snapshot => {
         if (!snapshot.exists()) {
@@ -68,10 +56,8 @@ function initUserAccounts() {
     });
 }
 
-// 2. AUTHENTICATION & LOGIN LOGIC
 function setupLogin() {
     const loginForm = document.getElementById('loginForm');
-
     if (loginForm) {
         loginForm.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -109,9 +95,6 @@ function setupLogin() {
 
                 currentUser = foundUser;
                 localStorage.setItem('adcon_current_user', JSON.stringify(currentUser));
-                
-                const errorMsg = document.getElementById('loginErrorMessage');
-                if (errorMsg) errorMsg.style.display = 'none';
                 
                 const loginModal = document.getElementById('loginModal');
                 if (loginModal) loginModal.style.display = 'none';
@@ -158,8 +141,6 @@ function logout() {
     localStorage.removeItem('adcon_current_user');
     const loginModal = document.getElementById('loginModal');
     if (loginModal) loginModal.style.display = 'flex';
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
 }
 
 function updateUIForRole() {
@@ -175,7 +156,6 @@ function updateUIForRole() {
     }
 }
 
-// 3. NAVIGATION & PAGE DISPLAY
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -190,101 +170,63 @@ function showPage(pageId) {
     }
 }
 
-// 4. FORM SUBMISSIONS WITH DATA ATTRIBUTION
 function setupFormListeners() {
-    handleFormSubmit('formProduction', 'production', () => {
+    handleFormSubmit('formProduction', () => {
         const dust = parseFloat(document.getElementById('prodDust')?.value) || 0;
         const agg10 = parseFloat(document.getElementById('prodAggregate10')?.value) || 0;
         const agg20 = parseFloat(document.getElementById('prodAggregate20')?.value) || 0;
-        const date = document.getElementById('prodDate')?.value || getTodayDate();
-        return {
-            date, type: 'production',
-            info: `Dust: ${dust}, 10mm: ${agg10}, 20mm: ${agg20}`,
-            value: dust + agg10 + agg20
-        };
+        return { date: document.getElementById('prodDate')?.value || getTodayDate(), type: 'production', info: `Dust: ${dust}, 10mm: ${agg10}, 20mm: ${agg20}`, value: dust + agg10 + agg20 };
     });
 
-    handleFormSubmit('formFuel', 'fuel', () => {
+    handleFormSubmit('formFuel', () => {
         const driver = document.getElementById('fuelDriverName')?.value || '';
         const plate = document.getElementById('fuelPlateNumber')?.value || '';
         const liters = parseFloat(document.getElementById('fuelLiters')?.value) || 0;
         const station = document.getElementById('fuelStationName')?.value || '';
-        const date = document.getElementById('fuelDate')?.value || getTodayDate();
-        return {
-            date, type: 'fuel',
-            info: `Driver: ${driver} | Plate: ${plate} | Station: ${station}`,
-            value: liters
-        };
+        return { date: document.getElementById('fuelDate')?.value || getTodayDate(), type: 'fuel', info: `Driver: ${driver} | Plate: ${plate} | Station: ${station}`, value: liters };
     });
 
-    handleFormSubmit('formTrucks', 'trucks', () => {
+    handleFormSubmit('formTrucks', () => {
         const driver = document.getElementById('truckDriverName')?.value || '';
         const dest = document.getElementById('truckDestination')?.value || '';
         const plate = document.getElementById('truckPlateNumber')?.value || '';
-        const date = document.getElementById('truckDate')?.value || getTodayDate();
-        return {
-            date, type: 'trucks',
-            info: `Driver: ${driver} | Dest: ${dest} | Plate: ${plate}`,
-            value: 1
-        };
+        return { date: document.getElementById('truckDate')?.value || getTodayDate(), type: 'trucks', info: `Driver: ${driver} | Dest: ${dest} | Plate: ${plate}`, value: 1 };
     });
 
-    handleFormSubmit('formSales', 'sales', () => {
+    handleFormSubmit('formSales', () => {
         const driver = document.getElementById('salesDriverName')?.value || '';
         const customer = document.getElementById('salesCustomerName')?.value || '';
         const loads = document.getElementById('salesLoads')?.value || 0;
         const truck = document.getElementById('salesTruckInfo')?.value || '';
         const amount = parseFloat(document.getElementById('salesAmount')?.value) || 0;
-        const date = document.getElementById('salesDate')?.value || getTodayDate();
-        return {
-            date, type: 'sales',
-            category: 'Aggregate',
-            info: `Customer: ${customer} | Driver: ${driver} | Truck: ${truck} (${loads} loads)`,
-            value: amount
-        };
+        return { date: document.getElementById('salesDate')?.value || getTodayDate(), type: 'sales', category: 'Aggregate', info: `Customer: ${customer} | Driver: ${driver} | Truck: ${truck} (${loads} loads)`, value: amount };
     });
 
-    handleFormSubmit('formExpenses', 'expenses', () => {
+    handleFormSubmit('formExpenses', () => {
         const item = document.getElementById('expItemName')?.value || '';
         const amount = parseFloat(document.getElementById('expAmount')?.value) || 0;
         const loc = document.getElementById('expLocation')?.value || '';
-        const date = document.getElementById('expDate')?.value || getTodayDate();
-        return {
-            date, type: 'expenses',
-            category: 'Equipment',
-            info: `Item: ${item} | Location: ${loc}`,
-            value: amount
-        };
+        return { date: document.getElementById('expDate')?.value || getTodayDate(), type: 'expenses', category: 'Equipment', info: `Item: ${item} | Location: ${loc}`, value: amount };
     });
 
-    handleFormSubmit('formIncoming', 'incoming', () => {
+    handleFormSubmit('formIncoming', () => {
         const desc = document.getElementById('incDescription')?.value || '';
         const payer = document.getElementById('incPayerName')?.value || '';
         const amount = parseFloat(document.getElementById('incAmount')?.value) || 0;
-        const date = document.getElementById('incDate')?.value || getTodayDate();
-        return {
-            date, type: 'incoming',
-            info: `Payer: ${payer} | Desc: ${desc}`,
-            value: amount
-        };
+        return { date: document.getElementById('incDate')?.value || getTodayDate(), type: 'incoming', info: `Payer: ${payer} | Desc: ${desc}`, value: amount };
     });
 }
 
-function handleFormSubmit(formId, pathKey, dataMapper) {
+function handleFormSubmit(formId, dataMapper) {
     const form = document.getElementById(formId);
     if (!form) return;
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
-        
-        if (!currentUser) {
-            alert("Fadlan marka hore soo gal (Login)!");
-            return;
-        }
+        if (!currentUser) return alert("Fadlan soo gal!");
 
-        const mappedData = dataMapper();
         const newItem = {
-            ...mappedData,
+            ...dataMapper(),
             createdBy: currentUser.username,
             createdAt: new Date().toISOString(),
             comments: []
@@ -292,27 +234,22 @@ function handleFormSubmit(formId, pathKey, dataMapper) {
 
         db.ref('records').push(newItem)
             .then(() => {
-                alert('Xogta si guul leh ayaa loogu kaydiyay Database-ka!');
+                alert('Xogta waa la kaydiyay!');
                 form.reset();
             })
-            .catch(err => {
-                alert('Cillad ayaa dhacday: ' + err.message);
-            });
+            .catch(err => alert('Error: ' + err.message));
     });
 }
 
-// 5. REALTIME LISTENER & CALCULATIONS
 function listenToRealtimeData() {
     db.ref('records').on('value', (snapshot) => {
         const data = snapshot.val();
         cachedRecords = [];
-
         if (data) {
             Object.keys(data).forEach(key => {
                 cachedRecords.push({ id: key, ...data[key] });
             });
         }
-
         updateDashboard(cachedRecords);
         renderReports();
     });
@@ -324,42 +261,13 @@ function getTodayDate() {
 
 function updateDashboard(records) {
     const today = getTodayDate();
-
-    const todayAggregateIncome = records
-        .filter(r => r.type === 'sales' && r.date === today)
-        .reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
-
-    const todayEquipmentExpense = records
-        .filter(r => r.type === 'expenses' && r.date === today)
-        .reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
-
+    const todayAggregateIncome = records.filter(r => r.type === 'sales' && r.date === today).reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
+    const todayEquipmentExpense = records.filter(r => r.type === 'expenses' && r.date === today).reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
     const todayNetBalance = todayAggregateIncome - todayEquipmentExpense;
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const dateLimitStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-    const monthlyIncome = records
-        .filter(r => r.type === 'sales' && r.date >= dateLimitStr)
-        .reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
-
-    const monthlyExpense = records
-        .filter(r => r.type === 'expenses' && r.date >= dateLimitStr)
-        .reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
-
-    const monthlyAccumulated = monthlyIncome - monthlyExpense;
-
-    if (document.getElementById('dashTodayAggregateIncome')) 
-        document.getElementById('dashTodayAggregateIncome').textContent = `$${todayAggregateIncome}`;
-    
-    if (document.getElementById('dashTodayEquipmentExpense')) 
-        document.getElementById('dashTodayEquipmentExpense').textContent = `$${todayEquipmentExpense}`;
-    
-    if (document.getElementById('dashTodayNetBalance')) 
-        document.getElementById('dashTodayNetBalance').textContent = `$${todayNetBalance}`;
-    
-    if (document.getElementById('dashMonthlyAccumulatedBalance')) 
-        document.getElementById('dashMonthlyAccumulatedBalance').textContent = `$${monthlyAccumulated}`;
+    if (document.getElementById('dashTodayAggregateIncome')) document.getElementById('dashTodayAggregateIncome').textContent = `$${todayAggregateIncome}`;
+    if (document.getElementById('dashTodayEquipmentExpense')) document.getElementById('dashTodayEquipmentExpense').textContent = `$${todayEquipmentExpense}`;
+    if (document.getElementById('dashTodayNetBalance')) document.getElementById('dashTodayNetBalance').textContent = `$${todayNetBalance}`;
 
     const getSum = (type) => records.filter(r => r.type === type).reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
     const getCount = (type) => records.filter(r => r.type === type).length;
@@ -372,113 +280,26 @@ function updateDashboard(records) {
     if (document.getElementById('dashTotalProduction')) document.getElementById('dashTotalProduction').textContent = `${getSum('production')} Loads`;
 }
 
-// 6. REPORTS FILTERING
 function renderReports() {
     const tableBody = document.getElementById('reportTableBody');
-    const filterSelect = document.getElementById('reportFilter');
-    const startDateInput = document.getElementById('reportStartDate');
-    const endDateInput = document.getElementById('reportEndDate');
-
     if (!tableBody) return;
-
     tableBody.innerHTML = '';
-    const filterValue = filterSelect ? filterSelect.value.toLowerCase() : 'all';
-    const startDate = startDateInput ? startDateInput.value : '';
-    const endDate = endDateInput ? endDateInput.value : '';
 
-    const filteredRecords = cachedRecords.filter(item => {
-        if (filterValue !== 'all' && item.type !== filterValue) {
-            return false;
-        }
-        if (startDate && item.date < startDate) {
-            return false;
-        }
-        if (endDate && item.date > endDate) {
-            return false;
-        }
-        return true;
-    });
-
-    if (filteredRecords.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Xog ma jirto.</td></tr>';
-        return;
-    }
-
-    filteredRecords.forEach(record => {
+    cachedRecords.forEach(record => {
         const row = document.createElement('tr');
-        
-        let unit = '';
-        if (record.type === 'sales' || record.type === 'expenses' || record.type === 'incoming') {
-            unit = '$';
-        } else if (record.type === 'fuel') {
-            unit = 'L ';
-        }
-
-        let commentsText = '';
-        if (record.comments && Array.isArray(record.comments)) {
-            commentsText = record.comments.map(c => `<div><small><b>${c.author}:</b> ${c.text}</small></div>`).join('');
-        } else if (record.comments && typeof record.comments === 'object') {
-            commentsText = Object.values(record.comments).map(c => `<div><small><b>${c.author}:</b> ${c.text}</small></div>`).join('');
-        }
-
-        let actionsHtml = `<button style="background-color: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;" onclick="addComment('${record.id}')">💬 Comment</button>`;
-
-        if (currentUser && currentUser.role === 'admin') {
-            actionsHtml += `<button style="background-color: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteRecord('${record.id}')">🗑️ Delete</button>`;
-        }
-
         row.innerHTML = `
             <td>${record.date || 'N/A'}</td>
-            <td style="text-transform: capitalize; font-weight: bold;">${record.type}</td>
+            <td style="font-weight:bold;">${record.type}</td>
             <td>${record.info || ''}</td>
-            <td>${unit}${record.value}</td>
-            <td><small><b>By:</b> ${record.createdBy || 'Unknown'}</small></td>
-            <td>${commentsText || '<i>Diminish</i>'}</td>
-            <td>${actionsHtml}</td>
+            <td>$${record.value}</td>
+            <td><small>${record.createdBy || 'Unknown'}</small></td>
+            <td><i>Diminish</i></td>
+            <td><button onclick="addComment('${record.id}')">💬</button></td>
         `;
         tableBody.appendChild(row);
     });
 }
 
-function filterReports() {
-    renderReports();
-}
-
-// 7. COMMENTS & DELETE ACTIONS
-function addComment(recordId) {
-    if (!currentUser) {
-        alert("Fadlan soo gal si aad comment u bixiso!");
-        return;
-    }
-
-    const commentText = prompt("Qor comment-kaaga/faalladaada:");
-    if (commentText) {
-        const newComment = {
-            author: currentUser.username,
-            text: commentText,
-            timestamp: new Date().toISOString()
-        };
-
-        db.ref(`records/${recordId}/comments`).push(newComment)
-            .then(() => alert("Comment-ka si guul leh ayaa loo kaydiyay!"))
-            .catch(err => alert("Cillad ayaa dhacday: " + err.message));
-    }
-}
-
-function deleteRecord(id) {
-    if (!currentUser || currentUser.role !== 'admin') {
-        alert("Awood uma lihid inaad xogtan tirtirto! (Admin Only)");
-        return;
-    }
-
-    if (confirm("Ma hubtaa inaad tirtirto xogtan?")) {
-        db.ref('records/' + id).remove()
-            .then(() => alert("Xogta waa la tirtiray!"))
-            .catch(error => alert("Cillad ayaa dhacday: " + error.message));
-    }
-}
-
-// 8. USER MANAGEMENT LOGIC (ADMIN CONTROL)
 function renderUserManagementTable() {
     const tableBody = document.getElementById('userTableBody');
     if (!tableBody) return;
@@ -514,20 +335,54 @@ function renderUserManagementTable() {
 }
 
 function toggleBlockUser(userKey, blockStatus) {
-    if (!currentUser || currentUser.role !== 'admin') {
-        alert("Admin kaliya ayaa xiri kara ama furi kara users-ka!");
-        return;
-    }
+    if (!currentUser || currentUser.role !== 'admin') return alert("Admin kaliya!");
 
     db.ref(`users/${userKey}/isBlocked`).set(blockStatus)
         .then(() => {
             alert(blockStatus ? "User-ka waa la xiray!" : "User-ka waa la furay!");
             renderUserManagementTable();
-        })
-        .catch(err => alert("Cillad: " + err.message));
+        });
 }
 
-// 9. NEW DIRECT CHAT LOGIC
+// --- ADD NEW USER FUNCTION (FIXED) ---
+function addNewUserHandler(e) {
+    if (e) e.preventDefault();
+
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert("Admin kaliya ayaa abuuraya user cusub!");
+        return false;
+    }
+
+    const usernameInput = document.getElementById('newUsername').value.trim();
+    const passwordInput = document.getElementById('newUserPassword').value.trim();
+    const roleInput = document.getElementById('newUserRole').value;
+
+    if (!usernameInput || !passwordInput) {
+        alert("Fadlan buuxi magaca iyo password-ka!");
+        return false;
+    }
+
+    const key = usernameInput.replace(/[\.\#\$\[\]]/g, "_");
+    const newUser = {
+        username: usernameInput,
+        password: passwordInput,
+        role: roleInput,
+        isBlocked: false
+    };
+
+    db.ref(`users/${key}`).set(newUser)
+        .then(() => {
+            alert(`User-ka "${usernameInput}" si guul leh ayaa loo abuuray!`);
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newUserPassword').value = '';
+            renderUserManagementTable();
+            loadChatUsers();
+        })
+        .catch(err => alert("Cillad: " + err.message));
+
+    return false;
+}
+
 function loadChatUsers() {
     const userListContainer = document.getElementById('chatUserList');
     if (!userListContainer) return;
@@ -539,7 +394,6 @@ function loadChatUsers() {
         if (users) {
             Object.keys(users).forEach(key => {
                 const u = users[key];
-                // Ka reeb qofka hadda xisaabta ku jira (Current user)
                 if (currentUser && u.username.toLowerCase() === currentUser.username.toLowerCase()) return;
 
                 const li = document.createElement('li');
@@ -548,10 +402,6 @@ function loadChatUsers() {
                 li.onclick = () => selectUserForChat(u.username, li);
                 userListContainer.appendChild(li);
             });
-        }
-
-        if (userListContainer.innerHTML === '') {
-            userListContainer.innerHTML = '<li style="padding:10px; color:gray;">Users ma jiraan</li>';
         }
     });
 }
@@ -581,11 +431,7 @@ function sendDirectMessage() {
         timestamp: new Date().toISOString()
     };
 
-    db.ref('messages').push(msgData)
-        .then(() => {
-            input.value = '';
-        })
-        .catch(err => alert("Error: " + err.message));
+    db.ref('messages').push(msgData).then(() => { input.value = ''; });
 }
 
 function listenToDirectMessages() {
@@ -597,7 +443,6 @@ function listenToDirectMessages() {
         if (!msgContainer) return;
 
         msgContainer.innerHTML = '';
-
         if (data) {
             Object.keys(data).forEach(key => {
                 const msg = data[key];
@@ -606,81 +451,34 @@ function listenToDirectMessages() {
                 const myName = currentUser.username.toLowerCase().trim();
                 const activeUser = selectedChatUser.toLowerCase().trim();
 
-                const isMyMessageToUser = sender === myName && receiver === activeUser;
-                const isUserMessageToMe = sender === activeUser && receiver === myName;
-
-                if (isMyMessageToUser || isUserMessageToMe) {
+                if ((sender === myName && receiver === activeUser) || (sender === activeUser && receiver === myName)) {
                     const bubble = document.createElement('div');
-                    const isSentByMe = sender === myName;
-                    
-                    bubble.className = `chat-bubble ${isSentByMe ? 'sent' : 'received'}`;
-                    bubble.innerHTML = `
-                        <div>${msg.text}</div>
-                        <small style="font-size: 10px; opacity: 0.8; display: block; text-align: right; margin-top: 3px;">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </small>
-                    `;
+                    bubble.className = `chat-bubble ${sender === myName ? 'sent' : 'received'}`;
+                    bubble.innerHTML = `<div>${msg.text}</div>`;
                     msgContainer.appendChild(bubble);
                 }
             });
-            msgContainer.scrollTop = msgContainer.scrollHeight;
-        }
-
-        if (msgContainer.innerHTML === '') {
-            msgContainer.innerHTML = '<p style="color: gray; text-align: center; margin-top: 20px;">Fariin weli ma dhex marin labadiina.</p>';
         }
     });
 }
 
-// 10. SETTINGS HANDLER
 function updateAccountSettingsHandler() {
-    if (!currentUser) {
-        alert("Fadlan marka hore soo gal (Login)!");
-        return;
-    }
+    if (!currentUser) return;
 
     const newUsername = document.getElementById('newUsernameInput').value.trim();
     const newPassword = document.getElementById('newPasswordInput').value.trim();
 
-    if (!newUsername && !newPassword) {
-        alert("Fadlan geli username ama password cusub!");
-        return;
-    }
+    if (!newUsername && !newPassword) return alert("Fadlan geli xog cusub!");
 
     const oldKey = currentUser.username.replace(/[\.\#\$\[\]]/g, "_");
     const updates = {};
-
     if (newUsername) updates.username = newUsername;
     if (newPassword) updates.password = newPassword;
 
     db.ref(`users/${oldKey}`).update(updates)
         .then(() => {
-            if (newUsername && newUsername !== currentUser.username) {
-                const newKey = newUsername.replace(/[\.\#\$\[\]]/g, "_");
-                db.ref(`users/${oldKey}`).once('value', snapshot => {
-                    const userData = snapshot.val();
-                    userData.username = newUsername;
-                    if (newPassword) userData.password = newPassword;
-
-                    db.ref(`users/${newKey}`).set(userData)
-                        .then(() => {
-                            db.ref(`users/${oldKey}`).remove();
-                        });
-                });
-                currentUser.username = newUsername;
-            }
-
-            if (newPassword) {
-                currentUser.password = newPassword;
-            }
-
-            localStorage.setItem('adcon_current_user', JSON.stringify(currentUser));
-            alert("Xogtaada si guul leh ayaa loo cusboonaysiiyay!");
-            
-            document.getElementById('newUsernameInput').value = '';
-            document.getElementById('newPasswordInput').value = '';
-            updateUIForRole();
-            loadChatUsers();
-        })
-        .catch(err => alert("Cillad: " + err.message));
+            alert("Xogtaada si guul leh ayaa loo beddelay!");
+            localStorage.setItem('adcon_current_user', JSON.stringify({ ...currentUser, ...updates }));
+            location.reload();
+        });
 }
