@@ -1,6 +1,7 @@
-const CACHE_NAME = 'adcon-v1.0.0';
+// Beddel version-kan markaad koodh cusub diraysid si uu cache-gii hore toos u tirtiro
+const CACHE_NAME = 'adcon-v1.0.1';
 
-// Faylasha loo baahan yahay in lagu kaydiyo cache-ka si uu offline u shaqeeyo
+// Faylasha loo baahan yahay in lagu kaydiyo cache-ka
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -11,30 +12,21 @@ const ASSETS_TO_CACHE = [
   './logo.jpg',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
 ];
+
+// 1. INSTALL EVENT - Kaydinta faylasha & Khasab shaqo gelinta Service Worker-ka cusub
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request));
-});
-
-// 1. INSTALL EVENT - Kaydinta faylasha aasaasiga ah
-self.addEventListener('install', (event) => {
+  console.log('[Service Worker] Installing new SW version...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching app assets');
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    }).then(() => self.skipWaiting()) // Khasab ku samee in uu toos u shaqeeyo
   );
 });
 
-// 2. ACTIVATE EVENT - Tirtirida cache-yadii hore marka uu nooc cusub soo baxo
+// 2. ACTIVATE EVENT - Tirtirida dhammaan cache-yadii hore
 self.addEventListener('activate', (event) => {
+  console.log('[Service Worker] Activating new SW version...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -45,40 +37,33 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => self.clients.claim()) // Toos ugu xidh dhammaan tabs-ka furan
   );
 });
 
-// 3. FETCH EVENT - Soo helida xogta (Offline First approach)
+// 3. FETCH EVENT - Network First (Toos ugu xidh Netlify si updates-ka laga helo)
 self.addEventListener('fetch', (event) => {
-  // Waxaan ka dhowraynaa Firebase API request-yada inay cache galaan
+  // Ka dhaaf Firebase ama APIs
   if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('firebase')) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Haddii fayl cusub la helo, kaydi
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+    // 1. Ugu horrayn ka soo hag Netlify (Network)
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return networkResponse;
-      });
-    }).catch(() => {
-      // Offline fallback haddii loo baahdo
-      console.log('[Service Worker] Network request failed and no cache available.');
-    })
+      })
+      .catch(() => {
+        // 2. Haddii uu Internet-ku go'an yahay keliya ka soo akhriso Cache-ga
+        console.log('[Service Worker] Fetching from offline cache...');
+        return caches.match(event.request);
+      })
   );
-});  
-
-// update-sw-v2
+});
