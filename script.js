@@ -94,7 +94,6 @@ function setupLogin() {
                     return;
                 }
 
-                // Taageero password ama pass (haddii uu ku jiro Firebase)
                 const actualPassword = foundUser.password || foundUser.pass;
 
                 if (actualPassword !== passwordInput) {
@@ -107,7 +106,6 @@ function setupLogin() {
                     return;
                 }
 
-                // Successful Login
                 currentUser = foundUser;
                 localStorage.setItem('adcon_current_user', JSON.stringify(currentUser));
                 
@@ -137,7 +135,6 @@ function showError(msg) {
 function checkAuthStatus() {
     const loginModal = document.getElementById('loginModal');
     if (currentUser) {
-        // Re-verify if blocked
         let key = currentUser.username.replace(/[\.\#\$\[\]]/g, "_");
         db.ref('users/' + key).on('value', snapshot => {
             let uData = snapshot.val();
@@ -251,7 +248,8 @@ function setupFormListeners() {
         return {
             date, type: 'expenses',
             category: 'Equipment',
-            info: `Item: ${item} | Location: ${loc}`,value: amount
+            info: `Item: ${item} | Location: ${loc}`,
+            value: amount
         };
     });
 
@@ -316,7 +314,6 @@ function listenToRealtimeData() {
     });
 }
 
-// Helper to check 24-hour / Today's date
 function getTodayDate() {
     return new Date().toISOString().split('T')[0];
 }
@@ -324,7 +321,6 @@ function getTodayDate() {
 function updateDashboard(records) {
     const today = getTodayDate();
 
-    // Today's Aggregate Income (Sales) & Equipment Expenses
     const todayAggregateIncome = records
         .filter(r => r.type === 'sales' && r.date === today)
         .reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
@@ -335,7 +331,6 @@ function updateDashboard(records) {
 
     const todayNetBalance = todayAggregateIncome - todayEquipmentExpense;
 
-    // Monthly Accumulated Balance (Last 30 Days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const dateLimitStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -350,7 +345,6 @@ function updateDashboard(records) {
 
     const monthlyAccumulated = monthlyIncome - monthlyExpense;
 
-    // Daily Activity Summary Cards Update
     if (document.getElementById('dashTodayAggregateIncome')) 
         document.getElementById('dashTodayAggregateIncome').textContent = `$${todayAggregateIncome}`;
     
@@ -363,7 +357,6 @@ function updateDashboard(records) {
     if (document.getElementById('dashMonthlyAccumulatedBalance')) 
         document.getElementById('dashMonthlyAccumulatedBalance').textContent = `$${monthlyAccumulated}`;
 
-    // Overall Totals
     const getSum = (type) => records.filter(r => r.type === type).reduce((sum, r) => sum + (parseFloat(r.value) || 0), 0);
     const getCount = (type) => records.filter(r => r.type === type).length;
 
@@ -375,7 +368,7 @@ function updateDashboard(records) {
     if (document.getElementById('dashTotalProduction')) document.getElementById('dashTotalProduction').textContent = `${getSum('production')} Loads`;
 }
 
-// 6. REPORTS FILTERING (CATEGORY, DATE RANGE) & RENDERING
+// 6. REPORTS FILTERING
 function renderReports() {
     const tableBody = document.getElementById('reportTableBody');
     const filterSelect = document.getElementById('reportFilter');
@@ -390,11 +383,9 @@ function renderReports() {
     const endDate = endDateInput ? endDateInput.value : '';
 
     const filteredRecords = cachedRecords.filter(item => {
-        // Category Filter
         if (filterValue !== 'all' && item.type !== filterValue) {
             return false;
         }
-        // Date Range Filter
         if (startDate && item.date < startDate) {
             return false;
         }
@@ -419,7 +410,6 @@ function renderReports() {
             unit = 'L ';
         }
 
-        // Render Comments
         let commentsText = '';
         if (record.comments && Array.isArray(record.comments)) {
             commentsText = record.comments.map(c => `<div><small><b>${c.author}:</b> ${c.text}</small></div>`).join('');
@@ -427,7 +417,6 @@ function renderReports() {
             commentsText = Object.values(record.comments).map(c => `<div><small><b>${c.author}:</b> ${c.text}</small></div>`).join('');
         }
 
-        // Actions: Delete (Admin Only) & Comment (Everyone)
         let actionsHtml = `<button style="background-color: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;" onclick="addComment('${record.id}')">💬 Comment</button>`;
 
         if (currentUser && currentUser.role === 'admin') {
@@ -504,7 +493,6 @@ function renderUserManagementTable() {
                     `<button style="background-color: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;" onclick="toggleBlockUser('${key}', false)">🔓 Unblock</button>` :
                     `<button style="background-color: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;" onclick="toggleBlockUser('${key}', true)">🔒 Block</button>`;
 
-                // Don't block primary admin
                 if (u.username === "Eng. Jibriil Axmed Ali") {
                     toggleBtn = '<i>Primary Admin</i>';
                 }
@@ -570,6 +558,11 @@ function addNewUserHandler() {
 }
 
 function submitNewMessage() {
+    if (!currentUser) {
+        alert("Fadlan marka hore soo gal (Login)!");
+        return;
+    }
+
     const receiverInput = document.getElementById('msgReceiver').value.trim();
     const textInput = document.getElementById('msgText').value.trim();
 
@@ -579,7 +572,7 @@ function submitNewMessage() {
     }
 
     const newMessage = {
-        sender: currentUser.username,
+        sender: currentUser.username.trim(),
         receiver: receiverInput,
         text: textInput,
         timestamp: new Date().toISOString()
@@ -588,7 +581,6 @@ function submitNewMessage() {
     db.ref('messages').push(newMessage)
         .then(() => {
             alert("Fariinta si guul leh ayaa loo diray!");
-            document.getElementById('msgReceiver').value = '';
             document.getElementById('msgText').value = '';
         })
         .catch(err => alert("Cillad: " + err.message));
@@ -604,14 +596,40 @@ function listenToMessages() {
         if (data) {
             Object.keys(data).forEach(key => {
                 const msg = data[key];
-                if (msg.receiver === 'ALL' || msg.receiver.toLowerCase() === currentUser?.username?.toLowerCase() || msg.sender.toLowerCase() === currentUser?.username?.toLowerCase()) {
+                
+                const currentUserName = currentUser?.username?.toLowerCase().trim();
+                const senderName = msg.sender?.toLowerCase().trim();
+                const receiverName = msg.receiver?.toLowerCase().trim();
+
+                const isForEveryone = receiverName === 'all';
+                const isIAmSender = senderName === currentUserName;
+                const isIAmReceiver = receiverName === currentUserName;
+
+                if (isForEveryone || isIAmSender || isIAmReceiver) {
                     const div = document.createElement('div');
-                    div.style.cssText = "background: #1e293b; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; color: #fff;";
-                    div.innerHTML = `<b>${msg.sender} ➔ ${msg.receiver}:</b> ${msg.text} <br><small style="color: #94a3b8;">${new Date(msg.timestamp).toLocaleString()}</small>`;
+                    const isMine = isIAmSender;
+
+                    div.style.cssText = `
+                        background: ${isMine ? '#2b394a' : '#1e293b'}; 
+                        padding: 12px; 
+                        border-radius: 8px; 
+                        border-left: 4px solid ${isMine ? '#10b981' : '#f59e0b'}; 
+                        color: #fff;
+                        margin-bottom: 8px;
+                    `;
+
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>${msg.sender} ➔ ${msg.receiver}</b>
+                            <small style="color: #94a3b8;">${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        </div>
+                        <p style="margin-top: 5px; font-size: 14px;">${msg.text}</p>
+                    `;
                     messageContainer.appendChild(div);
                 }
             });
         }
+
         if (messageContainer.innerHTML === '') {
             messageContainer.innerHTML = '<p style="color: gray; text-align: center;">Fariimo ma jiraan.</p>';
         }
