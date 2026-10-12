@@ -636,23 +636,59 @@ function listenToMessages() {
     });
 }
 
-function updatePasswordHandler() {
-    if (!currentUser) return;
-
-    const newPass = document.getElementById('newPasswordInput').value.trim();
-    if (!newPass) {
-        alert("Fadlan geli password-ka cusub!");
+function updateAccountSettingsHandler() {
+    if (!currentUser) {
+        alert("Fadlan marka hore soo gal (Login)!");
         return;
     }
 
-    let key = currentUser.username.replace(/[\.\#\$\[\]]/g, "_");
+    const newUsername = document.getElementById('newUsernameInput').value.trim();
+    const newPassword = document.getElementById('newPasswordInput').value.trim();
 
-    db.ref(`users/${key}/password`).set(newPass)
+    if (!newUsername && !newPassword) {
+        alert("Fadlan geli username ama password cusub!");
+        return;
+    }
+
+    const oldKey = currentUser.username.replace(/[\.\#\$\[\]]/g, "_");
+    const updates = {};
+
+    if (newUsername) {
+        updates.username = newUsername;
+    }
+    if (newPassword) {
+        updates.password = newPassword;
+    }
+
+    // Update in Firebase Database
+    db.ref(`users/${oldKey}`).update(updates)
         .then(() => {
-            alert("Password-kaaga si guul leh ayaa loo beddelay!");
-            currentUser.password = newPass;
+            // If username changed, we should migrate the key or update current user object
+            if (newUsername && newUsername !== currentUser.username) {
+                const newKey = newUsername.replace(/[\.\#\$\[\]]/g, "_");
+                db.ref(`users/${oldKey}`).once('value', snapshot => {
+                    const userData = snapshot.val();
+                    userData.username = newUsername;
+                    if (newPassword) userData.password = newPassword;
+
+                    db.ref(`users/${newKey}`).set(userData)
+                        .then(() => {
+                            db.ref(`users/${oldKey}`).remove();
+                        });
+                });
+                currentUser.username = newUsername;
+            }
+
+            if (newPassword) {
+                currentUser.password = newPassword;
+            }
+
             localStorage.setItem('adcon_current_user', JSON.stringify(currentUser));
+            alert("Xogtaada si guul leh ayaa loo cusboonaysiiyay!");
+            
+            document.getElementById('newUsernameInput').value = '';
             document.getElementById('newPasswordInput').value = '';
+            updateUIForRole();
         })
         .catch(err => alert("Cillad: " + err.message));
 }

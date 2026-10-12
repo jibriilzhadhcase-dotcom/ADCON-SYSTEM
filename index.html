@@ -323,18 +323,22 @@
                 </div>
             </section>
 
-            <!-- SETTINGS SECTION -->
+            <!-- SETTINGS SECTION (UPDATED FOR USERNAME & PASSWORD) -->
             <section id="settings-page" class="page-section">
                 <div class="top-header">
                     <h1>Dejinta Koontada (Settings)</h1>
                 </div>
                 <div class="form-style">
-                    <h3>Beddel Password-kaaga</h3>
+                    <h3>Beddel Username-ka & Password-ka</h3>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="newUsernameInput">Username-ka Cusub</label>
+                        <input type="text" id="newUsernameInput" placeholder="Geli username cusub...">
+                    </div>
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label for="newPasswordInput">Password-ka Cusub</label>
-                        <input type="password" id="newPasswordInput" placeholder="Geli password cusub..." required>
+                        <input type="password" id="newPasswordInput" placeholder="Geli password cusub...">
                     </div>
-                    <button type="button" class="btn-submit" onclick="updatePasswordHandler()">Beddel Password</button>
+                    <button type="button" class="btn-submit" onclick="updateAccountSettingsHandler()">Kaydi Isbeddelka</button>
                 </div>
             </section>
 
