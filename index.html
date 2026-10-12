@@ -48,11 +48,9 @@
                 <button class="nav-btn" onclick="showPage('incoming')">📥 Incoming</button>
                 <button class="nav-btn" onclick="showPage('reports')">📄 Reports</button>
                 
-                <!-- NEW OPTIONS: MESSAGES & SETTINGS -->
                 <button class="nav-btn" onclick="showPage('messages-page')">💬 Messages</button>
                 <button class="nav-btn" onclick="showPage('settings-page')">⚙️ Settings</button>
 
-                <!-- ADMIN ONLY MENU -->
                 <button id="adminUserMgmtBtn" class="nav-btn admin-only" style="display:none;" onclick="showPage('user-management')">👥 Maamulka Users-ka</button>
                 
                 <button class="nav-btn logout-btn" onclick="logout()">🔴 Logout</button>
@@ -62,13 +60,12 @@
         <!-- MAIN CONTENT AREA -->
         <main class="main-content">
 
-            <!-- DASHBOARD SECTION (Daily Activities - 24 Hours) -->
+            <!-- DASHBOARD SECTION -->
             <section id="dashboard" class="page-section active">
                 <div class="top-header">
                     <h1>Shaqada Maanta (Daily Activities - 24 Hours)</h1>
                 </div>
 
-                <!-- DAILY CASH FLOW (JAYGA / AGGREGATE SUMMARY) -->
                 <div class="cards-grid" style="margin-bottom: 25px;">
                     <div class="card highlight-card" style="border-left: 5px solid #10b981;">
                         <h3>Dakhliga Jayga (Maanta)</h3>
@@ -88,7 +85,6 @@
                     </div>
                 </div>
 
-                <!-- GENERAL DASHBOARD SUMMARY -->
                 <div class="cards-grid">
                     <div class="card">
                         <h3>Total Sales</h3>
@@ -209,7 +205,7 @@
                 </form>
             </section>
 
-            <!-- SALES SECTION (AGGREGATE) -->
+            <!-- SALES SECTION -->
             <section id="sales" class="page-section">
                 <div class="top-header">
                     <h1>Sales Entry (Aggregate/Jayga)</h1>
@@ -301,29 +297,35 @@
                 </form>
             </section>
 
-            <!-- MESSAGES SECTION -->
+            <!-- MESSAGES SECTION (NEW CHAT UI) -->
             <section id="messages-page" class="page-section">
                 <div class="top-header">
-                    <h1>Fariimaha Nidaamka (Messages)</h1>
+                    <h1>Nidaamka Fariimaha (Chat System)</h1>
                 </div>
-                <div class="form-style" style="margin-bottom: 20px;">
-                    <h3>Dir Fariin Cusub</h3>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <input type="text" id="msgReceiver" placeholder="Ku socota (Tusaale: ALL ama Magaca User-ka)" required>
+                <div class="chat-container">
+                    <div class="chat-sidebar">
+                        <h3 style="padding: 10px; border-bottom: 1px solid #ddd; color: #333;">Users-ka</h3>
+                        <ul id="chatUserList" class="user-chat-list">
+                            <!-- User-ka ayaa halkan si dynamic ah ugu soo baxaya -->
+                        </ul>
                     </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <textarea id="msgText" placeholder="Qor fariintaada halkan..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;" rows="3" required></textarea>
-                    </div>
-                    <button type="button" class="btn-submit" onclick="submitNewMessage()">Dir Fariinta</button>
-                </div>
-                <div class="table-container">
-                    <div id="messageList" style="display: flex; flexDirection: column; gap: 10px;">
-                        <!-- Messages loaded dynamically -->
+
+                    <div class="chat-main">
+                        <div class="chat-header">
+                            <h3 id="activeChatUser">Dooro User si aad ugu qorto fariin...</h3>
+                        </div>
+                        <div id="chatMessages" class="chat-messages">
+                            <p style="color: gray; text-align: center; margin-top: 20px;">Fadlan ka dooro user dhinaca bidix si aad sheekada u bilaabto.</p>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" placeholder="Write message..." disabled>
+                            <button type="button" id="chatSendBtn" class="btn-submit" onclick="sendDirectMessage()" style="margin-top:0;" disabled>Send ➔</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- SETTINGS SECTION (UPDATED FOR USERNAME & PASSWORD) -->
+            <!-- SETTINGS SECTION -->
             <section id="settings-page" class="page-section">
                 <div class="top-header">
                     <h1>Dejinta Koontada (Settings)</h1>
@@ -348,7 +350,6 @@
                     <h1>Maamulka Users-ka (Admin Control)</h1>
                 </div>
 
-                <!-- ADD NEW USER FORM (ADMIN ONLY) -->
                 <div class="form-style" style="margin-bottom: 25px;">
                     <h3>Ku Dar User Cusub</h3>
                     <div class="form-grid">
@@ -382,7 +383,7 @@
                             </tr>
                         </thead>
                         <tbody id="userTableBody">
-                            <!-- Populated dynamically by script.js -->
+                            <!-- Populated dynamically -->
                         </tbody>
                     </table>
                 </div>
